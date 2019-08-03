@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>管理页面</title>
+</head>
+<style>
+    .chat_box{
+        display: none;
+        border: 1px solid red;
+        width: 600px;height:400px;
+        float: right;
+        margin-right: 200px;
+    }
+    .chat_box:after{
+        content: '';
+        display: block;
+        clear: both;
+    }
+    li{
+        list-style: none;
+        margin: 10px 0;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .div_left{
+        float: left;
+
+    }
+    .div_right{
+        float: right;
+
+    }
+
+</style>
+<body>
+
+   <div class="content">
+       <h3>当前在线用户列表</h3>
+       <ul class="user_list">
+
+       </ul>
+   </div>
+   <div class="chat_box"  >
+        <ul class="chat_content">
+        </ul>
+       <div class="chat_menu">
+           <textarea class="text_box"></textarea>
+           <button class="clear_btn">清空</button>
+           <button id="" class="send_btn">发送</button>
+       </div>
+   </div>
+
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+<script th:inline="javascript">
+    var url=[[${#request.getRemoteHost()}]];
+    console.log(url)
+    $(function () {
+        let userList=$(".user_list");
+        let chatContent=$(".chat_content");
+        let textBox=$(".text_box");
+        let clearBtn=$(".clear_btn");
+        let sendBtn=$(".send_btn");
+        userList.on("click","li",function () {
+            alert($(this).attr("id"))
+            $(".chat_box").show();
+            let userId= $(this).attr("id");
+            sendBtn.attr("id",userId)
+            $.ajax({
+                url: "box",
+                type: "POST",
+                data: "fromId="+userId,
+                dataType: "JSON",
+                success: function (res) {
+
+                    if (res){
+
+                       $.each(res,function (i,v) {
+                           console.log(v)
+                           let li="";
+                           if (v.fromId==1){
+                                li=" <li ><div  class=\"div_right\">"+v.messageText+"</div></li>";
+                           }else{
+                                 li=" <li ><div  class=\"div_left\">"+v.messageText+"</div></li>";
+                           }
+                           chatContent.append(li);
+                       })
+                    }
+                }
+
+            })
+        })
+        //清空文本框输入
+        clearBtn.on("click",function () {
+            textBox.val("");
+        });
+
+        //发送文本内容
+        sendBtn.on("click",function () {
+           console.log(textBox.val())
+           var json= {"toId":$(this).attr("id"),"msg":textBox.val()};
+           textBox.empty();
+           console.log(json)
+            websocket.send(JSON.stringify(json))
+            let li="";
+            li=" <li ><div  class=\"div_right\">"+textBox.val()+"</div></li>";
+            chatContent.append(li);
+            textBox.val("");
+
+        })
+        var websocket = null;
+        if('WebSocket' in window){
+            websocket = new WebSocket("ws://localhost:6060/ws/1");
+            // 建立成功后的回调函数
+            websocket.onopen = function (ev) {
+                //setMessageInnerHTML("open");
+            }
+            websocket.onclose=function(ws){
+                //setMessageInnerHTML("close"+ws);
+                console.log(ws)
+            }
+            websocket.onmessage=function (ev) {
+                var msg=ev.data;
+                let arr=msg.split(",");
+                if (arr.length==2){
+                    if (arr[1]==0){
+                        userList.find("li[id="+arr[0]+"]").remove();
+                    }
+                    else{
+                        userList.prepend( '<li id="'+arr[0]+'">游客'+arr[0]+'\<点击游客进行聊天</li>');
+                    }
+                }
+
+                if ($(".chat_box").css("display")!="none"){
+                    let data=JSON.parse(msg);
+                    console.log(data)
+                    if (sendBtn.attr("id")==data.fromId) {
+
+                        let li="";
+
+                        if (data.fromId==1){
+                            li=" <li ><div  class=\"div_right\">"+data.messageText+"</div></li>";
+                        }else{
+                            li=" <li ><div  class=\"div_left\">"+data.messageText+"</div></li>";
+                        }
+                        chatContent.append(li);
+
+                    }
+
+
+                }
+
+
+                //setMessageInnerHTML(ev.data);
+            }
+            websocket.onerror = (ws) => {
+                console.log("发送错误！", ws);
+            }
+
+            //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
+            window.onbeforeunload = function(){
+                websocket.close();
+            }
+
+
+        }else {
+            alert("浏览器不支持");
+        }
+        //将消息显示在网页上
+        function setMessageInnerHTML(innerHTML){
+            document.getElementById('message').innerHTML += innerHTML + '<br/>';
+        }
+
+        //关闭连接
+        function closeWebSocket(){
+            websocket.close();
+        }
+
+        //发送消息
+        function send(obj){
+            websocket.send(obj);
+        }
+
+
+    })
+
+
+</script>
+</body>
+</html>

@@ -15,7 +15,7 @@
     console.log(url)
     var websocket = null;
     if('WebSocket' in window){
-        websocket = new WebSocket("ws://localhost:6060/ws/"+Math.floor(Math.random()*10)+1);
+        websocket = new WebSocket("ws://localhost:6060/ws");
         // 建立成功后的回调函数
         websocket.onopen = function (ev) {
             setMessageInnerHTML("open");

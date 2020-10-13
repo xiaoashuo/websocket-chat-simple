@@ -1,10 +1,12 @@
 package com.lovecyy.web.socket.netty;
 
 import io.netty.channel.*;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.AttributeKey;
+import org.springframework.util.StringUtils;
 
 import javax.net.ssl.HandshakeCompletedEvent;
 
@@ -17,13 +19,15 @@ public class HearBeatHandler extends ChannelInboundHandlerAdapter {
     //触发用户事件
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt == WebSocketServerProtocolHandler.ServerHandshakeStateEvent.HANDSHAKE_COMPLETE){
+            //握手完成后鉴权
+            Channel channel = ctx.channel();
+            AuthHandler.ValidateResult validateResult = channel.attr(TOKEN).get();
+            if (StringUtils.isEmpty(validateResult.getToken())){
+                ctx.writeAndFlush(new TextWebSocketFrame("token错误")).addListener(ChannelFutureListener.CLOSE);
+            }
 
-      if (evt == WebSocketServerProtocolHandler.ServerHandshakeStateEvent.HANDSHAKE_COMPLETE){
-          Channel channel = ctx.channel();
-          AuthHandler.ValidateResult validateResult = channel.attr(TOKEN).get();
-          ctx.writeAndFlush(validateResult).addListener(ChannelFutureListener.CLOSE);
-
-      }
+        }
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent idleStateEvent = (IdleStateEvent) evt;
             if (idleStateEvent.state() == IdleState.READER_IDLE) {//读空闲

@@ -36,6 +36,7 @@ public class WebSocketInitializer extends ChannelInitializer<SocketChannel> {
                 // ====================== 以下是支持httpWebsocket ======================
 
                 .addLast(new AuthHandler())
+
                 /**
                  * websocket 服务器处理的协议，用于指定给客户端连接访问的路由 : /ws
                  * 本handler会帮你处理一些繁重的复杂的事
@@ -50,7 +51,9 @@ public class WebSocketInitializer extends ChannelInitializer<SocketChannel> {
                 .addLast(new HearBeatHandler())
                 // ====================== 增加心跳支持 end    ======================
                 //添加自定有的 handler
-                .addLast(new ChatHandler());
+
+                .addLast(new ChatHandler())
+                ;
 
 
 

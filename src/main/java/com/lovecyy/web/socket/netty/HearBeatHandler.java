@@ -1,19 +1,29 @@
 package com.lovecyy.web.socket.netty;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.*;
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.util.AttributeKey;
+
+import javax.net.ssl.HandshakeCompletedEvent;
 
 /**
  * 心跳机制
  */
 public class HearBeatHandler extends ChannelInboundHandlerAdapter {
-
+    public static final AttributeKey<AuthHandler.ValidateResult> TOKEN =
+            AttributeKey.valueOf("TOKEN");
     //触发用户事件
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 
+      if (evt == WebSocketServerProtocolHandler.ServerHandshakeStateEvent.HANDSHAKE_COMPLETE){
+          Channel channel = ctx.channel();
+          AuthHandler.ValidateResult validateResult = channel.attr(TOKEN).get();
+          ctx.writeAndFlush(validateResult).addListener(ChannelFutureListener.CLOSE);
+
+      }
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent idleStateEvent = (IdleStateEvent) evt;
             if (idleStateEvent.state() == IdleState.READER_IDLE) {//读空闲

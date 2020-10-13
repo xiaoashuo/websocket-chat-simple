@@ -35,6 +35,7 @@ public class WebSocketInitializer extends ChannelInitializer<SocketChannel> {
                 .addLast(new HttpObjectAggregator(1024*64))
                 // ====================== 以下是支持httpWebsocket ======================
 
+                .addLast(new AuthHandler())
                 /**
                  * websocket 服务器处理的协议，用于指定给客户端连接访问的路由 : /ws
                  * 本handler会帮你处理一些繁重的复杂的事
@@ -45,7 +46,7 @@ public class WebSocketInitializer extends ChannelInitializer<SocketChannel> {
                 // ====================== 增加心跳支持 start    ======================
                 //添加Netty空闲超时检查的支持
                 //4:读空闲超时,8:写空闲超时,12: 读写空闲超时
-                .addLast(new IdleStateHandler(4,8,12))
+                .addLast(new IdleStateHandler(20,24,50))
                 .addLast(new HearBeatHandler())
                 // ====================== 增加心跳支持 end    ======================
                 //添加自定有的 handler

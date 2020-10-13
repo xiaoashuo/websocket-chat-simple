@@ -75,6 +75,8 @@ public class ChatHandler extends SimpleChannelInboundHandler<TextWebSocketFrame>
         channels.add(ctx.channel());
     }
 
+
+
     //出现异常是关闭通道
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
